@@ -11,7 +11,8 @@ class JenkinsRepo(Repo):
         """
 
         describe = self.git.describe('--all')
-        describe_list = describe.split('/')
+        # branch name may be feature/my_branch, so we split only first 2 `/`
+        describe_list = describe.split('/', 2)
         reponame = self.remotes.origin.url.split('/')[-1].split('.git')[0]
         repoowner = self.remotes.origin.url.split('/')[-2].split('.com:')[-1]
 
