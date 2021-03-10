@@ -12,7 +12,9 @@ class JenkinsRepo(Repo):
 
         describe = self.git.describe('--all')
         # branch name may be feature/my_branch, so we split only first 2 `/`
-        describe_list = describe.split('/', 2)
+        describe_list_branch = describe.split('/', 1)
+        # cant use same split for branch and pr case
+        describe_list_pr = describe.split('/')
         reponame = self.remotes.origin.url.split('/')[-1].split('.git')[0]
         repoowner = self.remotes.origin.url.split('/')[-2].split('.com:')[-1]
 
@@ -21,18 +23,18 @@ class JenkinsRepo(Repo):
         # it works basically on ci with
         # clean git init and fetch remote with +refs/pull/*:refs/origin/pr/*
         # in onther cases with high chance it wont detect pr
-        if describe_list[1] == 'pr' and len(describe_list) > 2:
-            data.update({'pull_request': describe_list[2]})
+        if describe_list_pr[1] == 'pr' and len(describe_list_pr) > 2:
+            data.update({'pull_request': describe_list_pr[2]})
             return data
         # tags case
-        if describe_list[0] == 'tags':
+        if describe_list_branch[0] == 'tags':
             branch = next(filter(
                 lambda x: 'origin' in x,
                 self.git.branch('-a', '--contains', describe).splitlines())).split('/')[2]
         # all others case
         else:
             try:
-                branch = describe_list[2]
+                branch = describe_list_branch[2]
             except IndexError:
                 branch = self.git.rev_parse('--abbrev-ref', 'HEAD')
 
