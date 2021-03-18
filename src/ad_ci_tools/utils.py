@@ -12,7 +12,7 @@ class JenkinsRepo(Repo):
 
         describe = self.git.describe('--all')
         # branch name may be feature/my_branch, so we split only first 2 `/`
-        describe_list_branch = describe.split('/', 1)
+        describe_list_branch = describe.split('/', 2)
         # cant use same split for branch and pr case
         describe_list_pr = describe.split('/')
         reponame = self.remotes.origin.url.split('/')[-1].split('.git')[0]
@@ -33,10 +33,10 @@ class JenkinsRepo(Repo):
                 self.git.branch('-a', '--contains', describe).splitlines())).split('/')[2]
         # all others case
         else:
-            try:
-                branch = describe_list_branch[2]
-            except IndexError:
+            if self.git.branch('--show-current'):
                 branch = self.git.rev_parse('--abbrev-ref', 'HEAD')
+            else:
+                branch = describe_list_branch[2]
 
         data.update({'branch': branch})
         return data
