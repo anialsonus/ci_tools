@@ -2,41 +2,48 @@ from git import Repo
 
 
 class JenkinsRepo(Repo):
-
     def get_git_data(self):
         """
-            Return git repo data.
-            In case of branch retun {branch: _name_}
-            In case of pr return {pull_request: _number_}
+        Return git repo data.
+        In case of branch retun {branch: _name_}
+        In case of pr return {pull_request: _number_}
         """
 
-        describe = self.git.describe('--all')
-        # branch name may be feature/my_branch, so we split only first 2 `/`
-        describe_list_branch = describe.split('/', 2)
-        # cant use same split for branch and pr case
-        describe_list_pr = describe.split('/')
-        reponame = self.remotes.origin.url.split('/')[-1].split('.git')[0]
-        repoowner = self.remotes.origin.url.split('/')[-2].split('.com:')[-1]
+        name = self.git.name_rev("--name-only", "HEAD")
+        # posible outputs
+        ## local cloned
+        # feature/ADH-1376/ADH-1377 #  branches
+        # tags/0.1.4 #  tags
+        ## jenkins cloned
+        # remotes/origin/feature/ADH-1376/ADH-1378 #   branches
+        # origin/pr/231/head #  pull requests
+        # tags/0.1.4 #  tags
 
-        data = {'reponame': reponame, 'repoowner': repoowner}
+        reponame = self.remotes.origin.url.split("/")[-1].split(".git")[0]
+        repoowner = self.remotes.origin.url.split("/")[-2].split(".com:")[-1]
+
+        data = {"reponame": reponame, "repoowner": repoowner}
         # pull request case
         # it works basically on ci with
         # clean git init and fetch remote with +refs/pull/*:refs/origin/pr/*
         # in onther cases with high chance it wont detect pr
-        if describe_list_pr[1] == 'pr' and len(describe_list_pr) > 2:
-            data.update({'pull_request': describe_list_pr[2]})
+        if name.startswith("origin/pr/"):
+            data.update({"pull_request": name.split("/")[2]})
             return data
+
         # tags case
-        if describe_list_branch[0] == 'tags':
-            branch = next(filter(
-                lambda x: 'origin' in x,
-                self.git.branch('-a', '--contains', describe).splitlines())).split('/')[2]
+        if name.startswith("tags/"):
+            branch = [
+                n
+                for n in self.git.branch("-a", "--contains", name).splitlines()
+                if "origin" in n
+            ][0].split("/")[2]
         # all others case
         else:
-            if self.git.branch('--show-current'):
-                branch = self.git.rev_parse('--abbrev-ref', 'HEAD')
+            if name.startswith("remotes/origin/"):
+                branch = name[len("remotes/origin/") :]
             else:
-                branch = describe_list_branch[2]
+                branch = name
 
-        data.update({'branch': branch})
+        data.update({"branch": branch})
         return data
