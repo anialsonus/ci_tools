@@ -36,7 +36,13 @@ class JenkinsRepo(Repo):
             branch = [
                 n
                 for n in self.git.branch("-a", "--contains", name).splitlines()
-                if "origin" in n
+                # Example for git branch -a --contains tags/some_tag
+                # master
+                # rc
+                # remotes/origin/HEAD -> origin/master 
+                # remotes/origin/master
+                # remotes/origin/rc
+                if "origin" in n and '->' not in n
             ][0].split("/")[2]
         # all others case
         else:
