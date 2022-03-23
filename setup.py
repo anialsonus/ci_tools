@@ -14,7 +14,7 @@ import setuptools
 
 setuptools.setup(
     name="ad_ci_tools",
-    version='0.1.6',
+    version='0.1.7',
     author="Rotaru Sergey",
     author_email="rsv@arenadata.io",
     description="Ci library with miscellaneous utils",
