@@ -29,6 +29,8 @@ class JenkinsRepo(Repo):
             data.update({"reponame": reponame})
             if os.getenv("CI_PIPELINE_SOURCE") == "merge_request_event":
                 data.update({"pull_request": os.getenv("CI_MERGE_REQUEST_IID")})
+            elif os.getenv("CI_OPEN_MERGE_REQUESTS") and 'Release' in os.getenv("CI_JOB_NAME", ''):
+                data.update({"pull_request": os.getenv("CI_OPEN_MERGE_REQUESTS").split("!")[1]})
             elif os.getenv("CI_COMMIT_TAG"):
                 data.update({"branch": os.getenv("CI_COMMIT_TAG")})
             else:
